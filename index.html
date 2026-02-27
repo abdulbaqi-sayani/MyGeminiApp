@@ -4,21 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>جيمناي السياني</title>
+    
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon.png">
+
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        .controls { display: flex; flex-direction: column; gap: 15px; align-items: center; margin-top: 30px; }
-        .btn { 
-            padding: 15px 30px; 
-            width: 200px;
-            cursor: pointer; 
-            border: none; 
-            border-radius: 10px; 
-            background-color: #1a73e8; 
-            color: white; 
-            font-size: 18px; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .btn {
+            display: block;
+            padding: 15px;
+            text-align: center;
+            border-radius: 12px;
+            font-size: 18px;
             font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            border: none;
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* ألوان مستوحاة من الصورة العلمية */
+        .btn-camera { background-color: #27ae60; } /* أخضر كيميائي */
+        .btn-upload { background-color: #2980b9; } /* أزرق تقني */
+        .btn-audio  { background-color: #8e44ad; } /* بنفسجي للمسجل */
+
+        input[type="file"] {
+            display: none;
         }
     </style>
 </head>
@@ -26,20 +71,20 @@
 
     <h1>جيمناي السياني</h1>
 
-    <div class="controls">
-        <label class="btn">
-            فتح الكاميرا
-            <input type="file" accept="image/*" capture="environment" style="display: none;">
+    <div class="container">
+        <label class="btn btn-camera">
+            📷 فتح الكاميرا
+            <input type="file" accept="image/*" capture="environment">
         </label>
 
-        <label class="btn" style="background-color: #34a853;">
-            تحميل ملف
-            <input type="file" style="display: none;">
+        <label class="btn btn-upload">
+            📁 تحميل ملف
+            <input type="file">
         </label>
 
-        <label class="btn" style="background-color: #ea4335;">
-            مسجل الصوت
-            <input type="file" accept="audio/*" style="display: none;">
+        <label class="btn btn-audio">
+            🎤 سجل صوتك
+            <input type="file" accept="audio/*">
         </label>
     </div>
 
