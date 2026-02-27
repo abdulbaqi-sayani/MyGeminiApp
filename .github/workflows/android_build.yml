@@ -1,0 +1,32 @@
+name: Build Gemini APK
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4 # تحديث لنسخة v4
+
+    - name: Set up JDK 17 # نستخدم JDK 17 للأداء الأفضل
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v3 # تحديث لنسخة v3
+      with:
+        gradle-version: 7.5
+
+    - name: Build with Gradle
+      run: gradle assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4 # الحل هنا: الترقية إلى v4
+      with:
+        name: MyGeminiApp-Final
+        path: app/build/outputs/apk/debug/app-debug.apk
