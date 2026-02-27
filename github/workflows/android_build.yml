@@ -2,7 +2,7 @@ name: Build Gemini APK
 
 on:
   push:
-    branches: [ "main" ] # سيعمل التلقائي عند رفع الكود لفرع main
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -16,7 +16,10 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
-        cache: gradle
+
+    # هذه الخطوة البرمجية ستقوم بإنشاء ملفات Gradle الناقصة تلقائياً
+    - name: Generate Gradle Wrapper
+      run: gradle wrapper --gradle-version 7.5
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
