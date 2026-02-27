@@ -1,1 +1,17 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // هذا المحرك المسؤول عن بناء أندرويد
+        classpath 'com.android.tools.build:gradle:7.4.2'
+    }
+}
 
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
