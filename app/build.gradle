@@ -1,0 +1,10 @@
+android {
+    compileSdk 33
+    defaultConfig {
+        applicationId "com.mygemini.app"
+        minSdk 26  // هذا الرقم هو ما يجعل التطبيق يعمل على أندرويد 8.0
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+    }
+}
