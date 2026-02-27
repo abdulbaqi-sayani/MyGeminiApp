@@ -1,4 +1,4 @@
-package com.your.package.name; // استبدل هذا باسم الحزمة الخاص بك
+package com.mygemini.app;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -20,18 +20,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        
+        // إنشاء الـ WebView برمجياً لتجنب مشاكل ملف الـ XML الخاص بالواجهة
+        myWebView = new WebView(this);
+        setContentView(myWebView);
 
-        myWebView = findViewById(R.id.webview);
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setDomStorageEnabled(true);
+        webSettings.setDatabaseEnabled(true);
 
         myWebView.setWebViewClient(new WebViewClient());
 
         myWebView.setWebChromeClient(new WebChromeClient() {
-            // هذه هي الدالة التي تفتح القائمة التي رأيتها في الصورة
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 if (MainActivity.this.filePathCallback != null) {
@@ -39,18 +41,18 @@ public class MainActivity extends AppCompatActivity {
                 }
                 MainActivity.this.filePathCallback = filePathCallback;
 
-                // 1. خيار التقاط صورة بالكاميرا
+                // خيار الكاميرا
                 Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 
-                // 2. خيار تسجيل فيديو
+                // خيار الفيديو
                 Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
 
-                // 3. خيار اختيار ملف من الجهاز
+                // خيار الملفات
                 Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
                 contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
-                contentSelectionIntent.setType("*/*"); // يسمح باختيار أي نوع ملف
+                contentSelectionIntent.setType("*/*");
 
-                // 4. إنشاء المصفي (Chooser) ودمج الخيارات فيه
+                // تجميع الخيارات في قائمة واحدة (التي طلبتها في الصورة)
                 Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
                 chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
                 chooserIntent.putExtra(Intent.EXTRA_TITLE, "إتمام الإجراء باستخدام:");
@@ -62,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // استبدل الرابط برابط موقعك أو Gemini
+        // تشغيل موقع Gemini
         myWebView.loadUrl("https://gemini.google.com");
     }
 
@@ -85,5 +87,14 @@ public class MainActivity extends AppCompatActivity {
 
         filePathCallback.onReceiveValue(results);
         filePathCallback = null;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (myWebView.canGoBack()) {
+            myWebView.goBack();
+        } else {
+            super.onBackPressed();
+        }
     }
 }
