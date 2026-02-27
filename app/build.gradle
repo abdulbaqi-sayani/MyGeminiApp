@@ -1,10 +1,28 @@
+apply plugin: 'com.android.application'
+
 android {
+    namespace 'com.mygemini.app'
     compileSdk 33
+
     defaultConfig {
         applicationId "com.mygemini.app"
-        minSdk 26  // هذا الرقم هو ما يجعل التطبيق يعمل على أندرويد 8.0
+        // الرقم 26 يعني أندرويد 8.0 (مواصفات هاتفك Huawei)
+        minSdk 26
         targetSdk 33
         versionCode 1
         versionName "1.0"
     }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    // مكتبات أندرويد الأساسية للواجهات
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
 }
