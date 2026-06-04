@@ -1,39 +1,61 @@
 package com.mygemini.app;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private WebView myWebView;
     private ValueCallback<Uri[]> filePathCallback;
     private final static int FILE_CHOOSER_RESULT_CODE = 1;
+    private final static int PERMISSIONS_REQUEST_CODE = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // إنشاء الـ WebView برمجياً لتجنب مشاكل ملف الـ XML الخاص بالواجهة
+        // إنشاء الـ WebView برمجياً لتجنب مشاكل ملف الـ XML
         myWebView = new WebView(this);
         setContentView(myWebView);
 
+        // إعدادات الـ WebView المتقدمة لدعم خصائص موقع Gemini
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setDatabaseEnabled(true);
+        webSettings.setMediaPlaybackRequiresUserGesture(false); // السماح بتشغيل الصوت تلقائياً
 
         myWebView.setWebViewClient(new WebViewClient());
 
         myWebView.setWebChromeClient(new WebChromeClient() {
+            
+            // أولاً: تمرير أذونات الميكروفون والكاميرا من الويب إلى النظام
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    // الموافقة التلقائية على طلبات أذونات الميكروفون والكاميرا القادمة من موقع Gemini
+                    request.grant(request.getResources());
+                }
+            }
+
+            // ثانياً: معالجة رفع الملفات والتقاط الصور (كودك الأصلي المنظم)
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 if (MainActivity.this.filePathCallback != null) {
@@ -41,31 +63,40 @@ public class MainActivity extends AppCompatActivity {
                 }
                 MainActivity.this.filePathCallback = filePathCallback;
 
-                // خيار الكاميرا
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                
-                // خيار الفيديو
-                Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-
-                // خيار الملفات
                 Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
                 contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
                 contentSelectionIntent.setType("*/*");
 
-                // تجميع الخيارات في قائمة واحدة (التي طلبتها في الصورة)
                 Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
                 chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
                 chooserIntent.putExtra(Intent.EXTRA_TITLE, "إتمام الإجراء باستخدام:");
-                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{takePictureIntent, takeVideoIntent});
 
                 startActivityForResult(chooserIntent, FILE_CHOOSER_RESULT_CODE);
-
                 return true;
             }
         });
 
-        // تشغيل موقع Gemini
+        // طلب أذونات النظام عند تشغيل التطبيق لضمان تفعيلها في الإعدادات
+        checkAndRequestPermissions();
+
+        // تشغيل موقع Gemini الرسمي
         myWebView.loadUrl("https://gemini.google.com");
+    }
+
+    // دالة فحص وطلب الأذونات من نظام الأندرويد بشكل ديناميكي
+    private void checkAndRequestPermissions() {
+        List<String> permissionsNeeded = new ArrayList<>();
+        
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.RECORD_AUDIO);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.CAMERA);
+        }
+
+        if (!permissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsNeeded.toArray(new String[0]), PERMISSIONS_REQUEST_CODE);
+        }
     }
 
     @Override
