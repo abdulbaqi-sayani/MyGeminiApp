@@ -57,10 +57,22 @@
             transform: scale(0.98);
         }
 
-        /* ألوان مستوحاة من الصورة العلمية */
-        .btn-camera { background-color: #27ae60; } /* أخضر كيميائي */
-        .btn-upload { background-color: #2980b9; } /* أزرق تقني */
-        .btn-audio  { background-color: #8e44ad; } /* بنفسجي للمسجل */
+        /* ألوان الأزرار */
+        .btn-camera { background-color: #27ae60; } 
+        .btn-upload { background-color: #2980b9; } 
+        .btn-audio  { background-color: #8e44ad; }
+
+        /* حالة التسجيل النشط للميكروفون */
+        .btn-audio.recording {
+            background-color: #e74c3c !important; /* يتحول للون الأحمر عند التسجيل */
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
 
         input[type="file"] {
             display: none;
@@ -82,11 +94,68 @@
             <input type="file">
         </label>
 
-        <label class="btn btn-audio">
-            🎤 سجل صوتك
-            <input type="file" accept="audio/*">
-        </label>
+        <button id="micBtn" class="btn btn-audio">
+            🎤 سجل صوتك مباُشِرة
+        </button>
     </div>
+
+    <script>
+        const micBtn = document.getElementById('micBtn');
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        micBtn.addEventListener('click', async () => {
+            // إذا لم يكن جاري التسجيل، ابدأ التسجيل
+            if (!isRecording) {
+                try {
+                    // 1. طلب إذن الميكروفون من المستخدم
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    // 2. تهيئة مسجل الصوت
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    // تجميع البيانات الصوتية أثناء التحدث
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+
+                    // عند إيقاف التسجيل، نقوم بمعالجة الملف الصوتي الناتجة
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        
+                        console.log("تم حفظ الملف الصوتي بنجاح في الرابط التالي:", audioUrl);
+                        alert("تم الانتهاء من تسجيل الصوت بنجاح وجاهز للإرسال إلى Gemini!");
+                        
+                        // هنا يمكنك مستقبلاً إرسال الـ audioBlob إلى السيرفر الخاص بـ Gemini API
+                    };
+
+                    // 3. بدء التسجيل وتحديث شكل الزر
+                    mediaRecorder.start();
+                    isRecording = true;
+                    micBtn.textContent = "🛑 جاري التسجيل... اضغط للإيقاف";
+                    micBtn.classList.add('recording');
+
+                } catch (err) {
+                    console.error("خطأ في الوصول للميكروفون:", err);
+                    alert("عذراً، لم نتمكن من تشغيل الميكروفون. تأكد من إعطاء الصلاحية للموقع وتأكد من أن الرابط يبدأ بـ https أو localhost");
+                }
+            } else {
+                // إذا كان يسجل بالفعل، قم بإيقافه عند الضغط مجدداً
+                mediaRecorder.stop();
+                // إيقاف استخدام الميكروفون وإغلاق الإشارة (Stream) للحفاظ على الخصوصية
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                isRecording = false;
+                micBtn.textContent = "🎤 سجل صوتك مباُشِرة";
+                micBtn.classList.remove('recording');
+            }
+        });
+    </script>
 
 </body>
 </html>
