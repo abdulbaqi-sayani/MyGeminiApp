@@ -57,14 +57,14 @@
             transform: scale(0.98);
         }
 
-        /* ألوان الأزرار */
+        /* ألوان مستوحاة من صورتك العلمية */
         .btn-camera { background-color: #27ae60; } 
         .btn-upload { background-color: #2980b9; } 
         .btn-audio  { background-color: #8e44ad; }
 
-        /* حالة التسجيل النشط للميكروفون */
+        /* تأثير الحركة واللون عند التسجيل النشط للميكروفون */
         .btn-audio.recording {
-            background-color: #e74c3c !important; /* يتحول للون الأحمر عند التسجيل */
+            background-color: #e74c3c !important;
             animation: pulse 1.5s infinite;
         }
 
@@ -95,66 +95,79 @@
         </label>
 
         <button id="micBtn" class="btn btn-audio">
-            🎤 سجل صوتك مباُشِرة
+            🎤 سجل صوتك مباشرة
         </button>
     </div>
 
     <script>
         const micBtn = document.getElementById('micBtn');
-        let mediaRecorder;
-        let audioChunks = [];
+        let recognition;
         let isRecording = false;
 
-        micBtn.addEventListener('click', async () => {
-            // إذا لم يكن جاري التسجيل، ابدأ التسجيل
-            if (!isRecording) {
-                try {
-                    // 1. طلب إذن الميكروفون من المستخدم
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    
-                    // 2. تهيئة مسجل الصوت
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
+        // التحقق الآمن من دعم المتصفح والنظام لتسجيل وتحويل الصوت
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-                    // تجميع البيانات الصوتية أثناء التحدث
-                    mediaRecorder.ondataavailable = (event) => {
-                        if (event.data.size > 0) {
-                            audioChunks.push(event.data);
-                        }
-                    };
+        if (!SpeechRecognition) {
+            micBtn.disabled = true;
+            micBtn.style.backgroundColor = "#7f8c8d";
+            micBtn.textContent = "🎤 الميكروفون غير مدعوم في هذا النظام";
+        } else {
+            // تهيئة واجهة التعرف على الصوت
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ar-SA'; // تعيين اللغة للغة العربية
+            recognition.continuous = false; // التوقف تلقائياً عند سكوت المستخدم
+            recognition.interimResults = false;
 
-                    // عند إيقاف التسجيل، نقوم بمعالجة الملف الصوتي الناتجة
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        
-                        console.log("تم حفظ الملف الصوتي بنجاح في الرابط التالي:", audioUrl);
-                        alert("تم الانتهاء من تسجيل الصوت بنجاح وجاهز للإرسال إلى Gemini!");
-                        
-                        // هنا يمكنك مستقبلاً إرسال الـ audioBlob إلى السيرفر الخاص بـ Gemini API
-                    };
+            // الأحداث البرمجية (Events):
+            
+            // 1. عند بدء التسجيل الفعلي
+            recognition.onstart = () => {
+                isRecording = true;
+                micBtn.textContent = "🛑 جاري الاستماع... تحدث الآن";
+                micBtn.classList.add('recording');
+            };
 
-                    // 3. بدء التسجيل وتحديث شكل الزر
-                    mediaRecorder.start();
-                    isRecording = true;
-                    micBtn.textContent = "🛑 جاري التسجيل... اضغط للإيقاف";
-                    micBtn.classList.add('recording');
-
-                } catch (err) {
-                    console.error("خطأ في الوصول للميكروفون:", err);
-                    alert("عذراً، لم نتمكن من تشغيل الميكروفون. تأكد من إعطاء الصلاحية للموقع وتأكد من أن الرابط يبدأ بـ https أو localhost");
+            // 2. معالجة الأخطاء (مثل رفض الصلاحيات)
+            recognition.onerror = (event) => {
+                console.error("خطأ في الميكروفون:", event.error);
+                if (event.error === 'not-allowed') {
+                    alert("يتعذر تشغيل الميكروفون. يرجى إعطاء صلاحية الميكروفون للمتصفح أو التطبيق من إعدادات الهاتف.");
+                } else {
+                    alert("حدث خطأ أثناء محاولة التسجيل: " + event.error);
                 }
-            } else {
-                // إذا كان يسجل بالفعل، قم بإيقافه عند الضغط مجدداً
-                mediaRecorder.stop();
-                // إيقاف استخدام الميكروفون وإغلاق الإشارة (Stream) للحفاظ على الخصوصية
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            };
+
+            // 3. عند التقاط الصوت وتحويله بنجاح إلى نص
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                console.log("النص المستخرج بنجاح:", transcript);
                 
+                // تنبيه مؤقت للمستخدم بالنتيجة
+                alert("تم التقاط صوتك بنجاح! النص: \n\n" + transcript);
+                
+                // 💡 ملاحظة تطويرية: هنا يمكنك مستقبلاً استدعاء دالة إرسال النص لـ Gemini API
+            };
+
+            // 4. عند إغلاق الميكروفون أو انتهاء المستخدم من التحدث
+            recognition.onend = () => {
                 isRecording = false;
-                micBtn.textContent = "🎤 سجل صوتك مباُشِرة";
+                micBtn.textContent = "🎤 سجل صوتك مباشرة";
                 micBtn.classList.remove('recording');
-            }
-        });
+            };
+
+            // ربط الزر ببدء وإيقاف الميكروفون عند الضغط
+            micBtn.addEventListener('click', () => {
+                if (!isRecording) {
+                    try {
+                        recognition.start(); // هذا الأمر يجبر النظام على طلب الصلاحية وإظهارها في الإعدادات
+                    } catch (e) {
+                        console.error(e);
+                    }
+                } else {
+                    recognition.stop();
+                }
+            });
+        }
     </script>
 
 </body>
