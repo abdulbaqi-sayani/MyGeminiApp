@@ -30,32 +30,43 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // إنشاء الـ WebView برمجياً لتجنب مشاكل ملف الـ XML
         myWebView = new WebView(this);
         setContentView(myWebView);
 
-        // إعدادات الـ WebView المتقدمة لدعم خصائص موقع Gemini
         WebSettings webSettings = myWebView.getSettings();
+        
+        // 1. تفعيل الإعدادات الأساسية للجافا سكريبت وتخزين البيانات
         webSettings.setJavaScriptEnabled(true);
         webSettings.setAllowFileAccess(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setDatabaseEnabled(true);
-        webSettings.setMediaPlaybackRequiresUserGesture(false); // السماح بتشغيل الصوت تلقائياً
+        
+        // 2. تفعيل خصائص تشغيل وتسجيل الصوت المتقدمة (حل مشكلة عدم استجابة الزر)
+        webSettings.setMediaPlaybackRequiresUserGesture(false); 
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+        
+        // 3. خدعة الـ User Agent (إجبار موقع Gemini على معاملة التطبيق كمتصفح Chrome رسمي كامل)
+        String chromeUserAgent = "Mozilla/5.0 (Linux; Android " + Build.VERSION.RELEASE + "; " + Build.MODEL + ") AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+        webSettings.setUserAgentString(chromeUserAgent);
 
         myWebView.setWebViewClient(new WebViewClient());
 
         myWebView.setWebChromeClient(new WebChromeClient() {
             
-            // أولاً: تمرير أذونات الميكروفون والكاميرا من الويب إلى النظام
+            // تمرير والموافقة على طلبات الأذونات (الميكروفون والكاميرا) القادمة من كود الموقع
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    // الموافقة التلقائية على طلبات أذونات الميكروفون والكاميرا القادمة من موقع Gemini
-                    request.grant(request.getResources());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            request.grant(request.getResources());
+                        }
+                    });
                 }
             }
 
-            // ثانياً: معالجة رفع الملفات والتقاط الصور (كودك الأصلي المنظم)
+            // معالجة رفع الملفات والصور من الجهاز
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
                 if (MainActivity.this.filePathCallback != null) {
@@ -76,14 +87,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // طلب أذونات النظام عند تشغيل التطبيق لضمان تفعيلها في الإعدادات
+        // طلب صلاحيات النظام فور تشغيل التطبيق
         checkAndRequestPermissions();
 
-        // تشغيل موقع Gemini الرسمي
+        // تحميل موقع Gemini الرسمي
         myWebView.loadUrl("https://gemini.google.com");
     }
 
-    // دالة فحص وطلب الأذونات من نظام الأندرويد بشكل ديناميكي
     private void checkAndRequestPermissions() {
         List<String> permissionsNeeded = new ArrayList<>();
         
