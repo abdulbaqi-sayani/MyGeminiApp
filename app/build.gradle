@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.mygemini.app"
-        // الرقم 26 يعني أندرويد 8.0 (مواصفات هاتفك Huawei)
+        // الحد الأدنى لدعم النظام (أندرويد 8.0) متوافق تماماً مع هاتفك الـ Huawei
         minSdk 26
         targetSdk 33
         versionCode 1
@@ -25,4 +25,7 @@ dependencies {
     // مكتبات أندرويد الأساسية للواجهات
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
+
+    // المكتبة البرمجية الجديدة المطلوبة لتشغيل كاستم تابس كروم وحل مشكلة الميكروفون
+    implementation 'androidx.browser:browser:1.5.0'
 }
